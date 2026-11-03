@@ -170,6 +170,25 @@ The checker in `mint-backend/systemd/contabo-public-origin-check.sh` verifies:
 
 This script does not require the backend shared secret.
 
+## Explorer IPv4 workaround for owner lookup
+
+On 2026-11-03, the Contabo backend's IPv6 connection to `blockindex.net` completed TLS but timed out while reading the HTTP response. IPv4 returned valid JSON. This caused `GET /api/public/owner` to return `502 public_owner_lookup_unavailable`; the RPC-based token-owner lookup remained available.
+
+For this condition, keep the existing explorer URL and add only this service drop-in at `/etc/systemd/system/corecats-mint-backend.service.d/60-explorer-ipv4.conf`:
+
+```ini
+[Service]
+RestrictAddressFamilies=~AF_INET6
+```
+
+Run `systemctl daemon-reload`, then `systemctl restart corecats-mint-backend.service`. The setting denies new IPv6 sockets for this backend and its child processes. It does not disable global IPv6 or change DNS, mining, or full-node service settings. No application-code change is required.
+
+Verify the effective setting with `systemctl show corecats-mint-backend.service -p RestrictAddressFamilies`. Confirm that local health still reports `read-only`, owner and token-owner reads return valid JSON through the local backend and public routes, and the full node remains running. Allow cached error responses to expire before judging public-route recovery.
+
+To roll back, remove only `/etc/systemd/system/corecats-mint-backend.service.d/60-explorer-ipv4.conf`, run `systemctl daemon-reload`, and restart only `corecats-mint-backend.service`. Retire the workaround after a direct IPv6 explorer request returns valid JSON and normal owner lookup is confirmed without the restriction.
+
+See [systemd RestrictAddressFamilies](https://www.freedesktop.org/software/systemd/man/latest/systemd.exec.html#RestrictAddressFamilies=) for the address-family deny-list semantics.
+
 ## Startup guard
 
 When the backend is started with `CORECATS_BACKEND_PROFILE=production`, it should fail closed unless:
