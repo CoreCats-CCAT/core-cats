@@ -1,11 +1,13 @@
 # `assets/`
 
-Small local asset bucket kept in the active `core-cats` repository only for files that are still directly used by the current Core-first production path.
+This directory contains production art inputs and GIFs published for the CoreCats community.
 
 Current notable case:
 
 1. `assets/traits/beam.png`
    - the no-logo beam superrare overlay used by the active canonical rebuild path
+
+[Community GIFs](community-gifs/) contains four 480×480 reaction GIFs and a 960×960 preview of the set.
 
 Boundary note:
 
